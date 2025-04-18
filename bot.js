@@ -15,12 +15,18 @@ if (!TOKEN) {
 const bot = new TelegramBot(TOKEN, { polling: true });
 
 // === Загрузка базы уроков ===
-const lessonsPath = path.join(__dirname, 'data', 'lessons.json');
-let lessons = [];
+const lessonsPathBeginner = path.join(__dirname, 'data', 'lessons.json');
+const lessonsPathIntermediate = path.join(__dirname, 'data', 'intermediate_lessons.json');
+
+let beginnerLessons = [];
+let intermediateLessons = [];
 
 try {
-  const data = fs.readFileSync(lessonsPath, 'utf-8');
-  lessons = JSON.parse(data);
+  const beginnerData = fs.readFileSync(lessonsPathBeginner, 'utf-8');
+  beginnerLessons = JSON.parse(beginnerData);
+
+  const intermediateData = fs.readFileSync(lessonsPathIntermediate, 'utf-8');
+  intermediateLessons = JSON.parse(intermediateData);
 } catch (err) {
   console.error('❌ Ошибка загрузки уроков:', err);
 }
@@ -56,14 +62,15 @@ bot.on('callback_query', (query) => {
 
 // === Функция для начала урока ===
 function startLesson(chatId, userId) {
+  const lessons = getLessonsForUser(userId);
   const lessonIndex = getProgress(userId);
-  const lesson = lessons[lessonIndex];
 
-  if (!lesson) {
-    console.log(`User ${userId} завершил все уроки.`);
-    return safeSend(chatId, '🎉 *Ты прошёл все доступные уроки!*', { parse_mode: 'Markdown' });
+  if (lessonIndex >= lessons.length) {
+    console.log(`User ${userId} завершил все уровни.`);
+    return safeSend(chatId, '🎉 *Ты завершил все уровни обучения! Отличная работа!*', { parse_mode: 'Markdown' });
   }
 
+  const lesson = lessons[lessonIndex];
   console.log(`User ${userId} начал урок ${lessonIndex + 1}: ${lesson.title}`);
   safeSend(chatId, `📘 *Урок ${lessonIndex + 1}: ${lesson.title}*\n\n${lesson.content}\n\nКогда будешь готов — нажми кнопку ниже, чтобы перейти к заданию.`, {
     parse_mode: 'Markdown',
@@ -82,6 +89,7 @@ bot.on('callback_query', (query) => {
 
   if (query.data.startsWith('task_')) {
     const lessonIndex = parseInt(query.data.split('_')[1], 10);
+    const lessons = getLessonsForUser(userId);
     const lesson = lessons[lessonIndex];
 
     if (!lesson || !lesson.task) {
@@ -107,6 +115,7 @@ bot.on('callback_query', (query) => {
 
 // === Проверка ответа ===
 function checkAnswer(chatId, userId, lessonIndex, selectedAnswer) {
+  const lessons = getLessonsForUser(userId);
   const lesson = lessons[lessonIndex];
   const correctAnswer = lesson.task.answer;
 
@@ -140,4 +149,17 @@ function safeSend(chatId, text, options = {}) {
   bot.sendMessage(chatId, text, options).catch((err) => {
     console.error(`Ошибка отправки сообщения пользователю ${chatId}:`, err.message);
   });
+}
+
+// === Получение уроков для пользователя ===
+function getLessonsForUser(userId) {
+  const progress = getProgress(userId);
+
+  // Если пользователь завершил все уроки для новичков
+  if (progress >= beginnerLessons.length) {
+    console.log(`User ${userId} перешёл на уровень "Продвинутый".`);
+    return intermediateLessons;
+  }
+
+  return beginnerLessons;
 }
