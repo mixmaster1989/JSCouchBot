@@ -59,8 +59,7 @@ bot.on('callback_query', (query) => {
     startLesson(chatId, userId);
   } else if (query.data === 'start_intermediate') {
     // Начать уроки для продвинутого уровня
-    const intermediateStartIndex = beginnerLessons.length; // Прогресс начинается после уроков для новичков
-    setProgress(userId, intermediateStartIndex);
+    setProgress(userId, beginnerLessons.length); // Устанавливаем прогресс на начало продвинутого уровня
     startLesson(chatId, userId);
   } else if (query.data.startsWith('answer_')) {
     const [_, lessonIndex, selectedAnswer] = query.data.split('_');
@@ -71,9 +70,9 @@ bot.on('callback_query', (query) => {
 // === Функция для начала урока ===
 function startLesson(chatId, userId) {
   const lessons = getLessonsForUser(userId);
-  const lessonIndex = getProgress(userId);
+  const lessonIndex = getProgress(userId) - (lessons === intermediateLessons ? beginnerLessons.length : 0);
 
-  if (lessonIndex >= lessons.length) {
+  if (lessonIndex >= lessons.length || lessons.length === 0) {
     console.log(`User ${userId} завершил все уровни.`);
     return safeSend(chatId, '🎉 *Ты завершил все уровни обучения! Отличная работа!*', { parse_mode: 'Markdown' });
   }
@@ -163,10 +162,16 @@ function safeSend(chatId, text, options = {}) {
 function getLessonsForUser(userId) {
   const progress = getProgress(userId);
 
-  // Если пользователь завершил все уроки для новичков
-  if (progress >= beginnerLessons.length) {
+  // Если пользователь завершил все уроки для новичков, переключаем на продвинутый уровень
+  if (progress >= beginnerLessons.length && progress < beginnerLessons.length + intermediateLessons.length) {
     console.log(`User ${userId} перешёл на уровень "Продвинутый".`);
     return intermediateLessons;
+  }
+
+  // Если пользователь завершил все уроки для обоих уровней
+  if (progress >= beginnerLessons.length + intermediateLessons.length) {
+    console.log(`User ${userId} завершил все уровни.`);
+    return [];
   }
 
   return beginnerLessons;
