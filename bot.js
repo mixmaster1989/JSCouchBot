@@ -30,20 +30,31 @@ const userProgress = {};
 // === Команда /start ===
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id;
-  bot.sendMessage(chatId, `👋 *Привет, ${msg.from.first_name}!*\n\nЯ — *JS CouchBot*.\nБуду твоим тренером по JavaScript. Готов начать обучение? Напиши /learn`, {
-    parse_mode: 'Markdown'
+  bot.sendMessage(chatId, `👋 *Привет, ${msg.from.first_name}!*\n\nЯ — *JS CouchBot*.\nБуду твоим тренером по JavaScript. Готов начать обучение?`, {
+    parse_mode: 'Markdown',
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: '🚀 Начать обучение', callback_data: 'start_learning' }]
+      ]
+    }
   });
 });
 
-// === Команда /learn ===
-bot.onText(/\/learn/, (msg) => {
-  const chatId = msg.chat.id;
-  const userId = msg.from.id;
+// === Обработка кнопки "Начать обучение" ===
+bot.on('callback_query', (query) => {
+  const chatId = query.message.chat.id;
+  const userId = query.from.id;
 
-  if (!lessons.length) {
-    return bot.sendMessage(chatId, '⚠️ *Пока нет загруженных уроков.*', { parse_mode: 'Markdown' });
+  if (query.data === 'start_learning') {
+    startLesson(chatId, userId);
+  } else if (query.data.startsWith('answer_')) {
+    const [_, lessonIndex, selectedAnswer] = query.data.split('_');
+    checkAnswer(chatId, userId, parseInt(lessonIndex, 10), selectedAnswer);
   }
+});
 
+// === Функция для начала урока ===
+function startLesson(chatId, userId) {
   const lessonIndex = userProgress[userId] || 0;
   const lesson = lessons[lessonIndex];
 
@@ -55,44 +66,67 @@ bot.onText(/\/learn/, (msg) => {
     parse_mode: 'Markdown',
     reply_markup: {
       inline_keyboard: [
-        [{ text: '🧠 Перейти к заданию', callback_data: 'task' }]
+        [{ text: '🧠 Перейти к заданию', callback_data: `task_${lessonIndex}` }]
       ]
     }
   });
-});
+}
 
 // === Обработка кнопки "Перейти к заданию" ===
 bot.on('callback_query', (query) => {
   const chatId = query.message.chat.id;
   const userId = query.from.id;
 
-  if (query.data === 'task') {
-    const lessonIndex = userProgress[userId] || 0;
+  if (query.data.startsWith('task_')) {
+    const lessonIndex = parseInt(query.data.split('_')[1], 10);
     const lesson = lessons[lessonIndex];
 
     if (!lesson || !lesson.task) {
       return bot.sendMessage(chatId, '🛠 *Задания для этого урока нет.*', { parse_mode: 'Markdown' });
     }
 
-    bot.sendMessage(chatId, `🧠 *Задание:*\n${lesson.task.question}`, { parse_mode: 'Markdown' });
+    const answers = shuffleAnswers([
+      lesson.task.answer,
+      'Неправильный ответ 1',
+      'Неправильный ответ 2',
+      'Неправильный ответ 3'
+    ]);
+
+    bot.sendMessage(chatId, `🧠 *Задание:*\n${lesson.task.question}`, {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        inline_keyboard: answers.map((answer, index) => [
+          { text: answer, callback_data: `answer_${lessonIndex}_${index}` }
+        ])
+      }
+    });
   }
 });
 
-// === Ответы пользователя на задание ===
-bot.on('message', (msg) => {
-  const chatId = msg.chat.id;
-  const userId = msg.from.id;
-  const text = msg.text;
-
-  if (text.startsWith('/')) return;
-
-  const lessonIndex = userProgress[userId] || 0;
+// === Проверка ответа ===
+function checkAnswer(chatId, userId, lessonIndex, selectedAnswerIndex) {
   const lesson = lessons[lessonIndex];
+  const correctAnswer = lesson.task.answer;
 
-  if (lesson && lesson.task && text.trim() === lesson.task.answer.trim()) {
+  if (lesson && lesson.task && selectedAnswerIndex === 0) {
     userProgress[userId] = lessonIndex + 1;
-    bot.sendMessage(chatId, '✅ *Верно!*\nПереходим к следующему уроку. Напиши /learn', { parse_mode: 'Markdown' });
-  } else if (lesson && lesson.task) {
+    bot.sendMessage(chatId, '✅ *Верно!*\nПереходим к следующему уроку.', {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: '➡️ Следующий урок', callback_data: 'start_learning' }]
+        ]
+      }
+    });
+  } else {
     bot.sendMessage(chatId, '❌ *Неверно.* Попробуй ещё раз.', { parse_mode: 'Markdown' });
   }
-});
+}
+
+// === Перемешивание вариантов ответа ===
+function shuffleAnswers(answers) {
+  return answers
+    .map((answer) => ({ answer, sort: Math.random() }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(({ answer }) => answer);
+}
