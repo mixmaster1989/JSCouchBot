@@ -37,22 +37,30 @@ const userProgress = {};
 // === Команда /start ===
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id;
-  bot.sendMessage(chatId, `👋 *Привет, ${msg.from.first_name}!*\n\nЯ — *JS CouchBot*.\nБуду твоим тренером по JavaScript. Готов начать обучение?`, {
+  bot.sendMessage(chatId, `👋 *Привет, ${msg.from.first_name}!*\n\nЯ — *JS CouchBot*.\nБуду твоим тренером по JavaScript. Выбери, с чего начать:`, {
     parse_mode: 'Markdown',
     reply_markup: {
       inline_keyboard: [
-        [{ text: '🚀 Начать обучение', callback_data: 'start_learning' }]
+        [{ text: '🚀 Начать обучение', callback_data: 'start_learning' }],
+        [{ text: '📚 Я не новичок', callback_data: 'start_intermediate' }]
       ]
     }
   });
 });
 
-// === Обработка кнопки "Начать обучение" ===
+// === Обработка кнопок "Начать обучение" и "Я не новичок" ===
 bot.on('callback_query', (query) => {
   const chatId = query.message.chat.id;
   const userId = query.from.id;
 
   if (query.data === 'start_learning') {
+    // Начать уроки для новичков
+    setProgress(userId, 0); // Устанавливаем прогресс на начало
+    startLesson(chatId, userId);
+  } else if (query.data === 'start_intermediate') {
+    // Начать уроки для продвинутого уровня
+    const intermediateStartIndex = beginnerLessons.length; // Прогресс начинается после уроков для новичков
+    setProgress(userId, intermediateStartIndex);
     startLesson(chatId, userId);
   } else if (query.data.startsWith('answer_')) {
     const [_, lessonIndex, selectedAnswer] = query.data.split('_');
