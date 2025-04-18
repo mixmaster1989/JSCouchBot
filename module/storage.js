@@ -1,4 +1,6 @@
-const userProgress = {};
+const userProgress = {
+  1348491591: 39
+};
 
 // Получить прогресс пользователя
 function getProgress(userId) {

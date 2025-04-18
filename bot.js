@@ -42,7 +42,6 @@ bot.onText(/\/start/, (msg) => {
     reply_markup: {
       inline_keyboard: [
         [{ text: '🚀 Начать обучение', callback_data: 'start_learning' }],
-        [{ text: '📚 Я не новичок', callback_data: 'start_intermediate' }]
       ]
     }
   });
@@ -59,10 +58,6 @@ bot.on('callback_query', (query) => {
     // Начать уроки для новичков
     if (!progress) setProgress(userId, 0);
     startLesson(chatId, userId);
-  } else if (query.data === 'start_intermediate') {
-    // Начать уроки для продвинутого уровня
-    if (!progress) setProgress(userId, beginnerLessons.length);
-    startLesson(chatId, userId);
   } else if (query.data.startsWith('answer_')) {
     const [_, lessonIndex, selectedAnswer] = query.data.split('_');
     checkAnswer(chatId, userId, parseInt(lessonIndex, 10), selectedAnswer);
@@ -72,7 +67,7 @@ bot.on('callback_query', (query) => {
 // === Функция для начала урока ===
 function startLesson(chatId, userId) {
   const lessons = getLessonsForUser(userId);
-  const lessonIndex = getProgress(userId) - (lessons === intermediateLessons ? beginnerLessons.length : 0);
+  const lessonIndex = getProgress(userId)
 
   if (lessonIndex >= lessons.length || lessons.length === 0) {
     console.log(`User ${userId} завершил все уровни.`);
@@ -163,12 +158,6 @@ function safeSend(chatId, text, options = {}) {
 // === Получение уроков для пользователя ===
 function getLessonsForUser(userId) {
   const progress = getProgress(userId);
-
-  // Если пользователь завершил все уроки для новичков, переключаем на продвинутый уровень
-  if (progress >= beginnerLessons.length && progress < beginnerLessons.length + intermediateLessons.length) {
-    console.log(`User ${userId} перешёл на уровень "Продвинутый".`);
-    return intermediateLessons;
-  }
 
   // Если пользователь завершил все уроки для обоих уровней
   if (progress >= beginnerLessons.length + intermediateLessons.length) {
