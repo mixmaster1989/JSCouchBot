@@ -1,0 +1,24 @@
+{
+  "name": "jscouchbot",
+  "version": "1.0.0",
+  "description": "🎓 **JSCouchBot** — Telegram-бот для обучения JavaScript с пошаговыми заданиями.  \r Автоматизированный помощник, который подаёт задачи, проверяет ответы и отслеживает прогресс.  \r Идеален для начинающих и тех, кто хочет прокачать базу, не выходя из Telegram.",
+  "main": "bot.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mixmaster1989/JSCouchBot.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mixmaster1989/JSCouchBot/issues"
+  },
+  "homepage": "https://github.com/mixmaster1989/JSCouchBot#readme",
+  "dependencies": {
+    "dotenv": "^16.5.0",
+    "node-telegram-bot-api": "^0.66.0"
+  }
+}

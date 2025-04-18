@@ -52,14 +52,16 @@ bot.onText(/\/start/, (msg) => {
 bot.on('callback_query', (query) => {
   const chatId = query.message.chat.id;
   const userId = query.from.id;
+  const progress = getProgress(userId);
 
+  
   if (query.data === 'start_learning') {
     // Начать уроки для новичков
-    setProgress(userId, 0); // Устанавливаем прогресс на начало
+    if (!progress) setProgress(userId, 0);
     startLesson(chatId, userId);
   } else if (query.data === 'start_intermediate') {
     // Начать уроки для продвинутого уровня
-    setProgress(userId, beginnerLessons.length); // Устанавливаем прогресс на начало продвинутого уровня
+    if (!progress) setProgress(userId, beginnerLessons.length);
     startLesson(chatId, userId);
   } else if (query.data.startsWith('answer_')) {
     const [_, lessonIndex, selectedAnswer] = query.data.split('_');
