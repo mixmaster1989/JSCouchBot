@@ -85,18 +85,17 @@ bot.on('callback_query', (query) => {
       return bot.sendMessage(chatId, '🛠 *Задания для этого урока нет.*', { parse_mode: 'Markdown' });
     }
 
+    // Собираем варианты ответов
     const answers = shuffleAnswers([
       lesson.task.answer,
-      'Неправильный ответ 1',
-      'Неправильный ответ 2',
-      'Неправильный ответ 3'
+      ...lesson.task.wrongAnswers
     ]);
 
     bot.sendMessage(chatId, `🧠 *Задание:*\n${lesson.task.question}`, {
       parse_mode: 'Markdown',
       reply_markup: {
-        inline_keyboard: answers.map((answer, index) => [
-          { text: answer, callback_data: `answer_${lessonIndex}_${index}` }
+        inline_keyboard: answers.map((answer) => [
+          { text: answer, callback_data: `answer_${lessonIndex}_${answer}` }
         ])
       }
     });
@@ -104,11 +103,11 @@ bot.on('callback_query', (query) => {
 });
 
 // === Проверка ответа ===
-function checkAnswer(chatId, userId, lessonIndex, selectedAnswerIndex) {
+function checkAnswer(chatId, userId, lessonIndex, selectedAnswer) {
   const lesson = lessons[lessonIndex];
   const correctAnswer = lesson.task.answer;
 
-  if (lesson && lesson.task && selectedAnswerIndex === 0) {
+  if (lesson && lesson.task && selectedAnswer === correctAnswer) {
     userProgress[userId] = lessonIndex + 1;
     bot.sendMessage(chatId, '✅ *Верно!*\nПереходим к следующему уроку.', {
       parse_mode: 'Markdown',

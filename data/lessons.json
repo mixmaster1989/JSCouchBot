@@ -12,7 +12,8 @@
       "content": "В JavaScript переменные объявляются с помощью ключевых слов var, let или const.",
       "task": {
         "question": "Какое ключевое слово используется для объявления переменной?",
-        "answer": "let"
+        "answer": "let",
+        "wrongAnswers": ["var", "const", "variable"]
       }
     },
     {
