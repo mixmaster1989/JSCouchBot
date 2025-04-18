@@ -3,6 +3,7 @@ require('dotenv').config(); // Подключаем .env
 const TelegramBot = require('node-telegram-bot-api');
 const fs = require('fs');
 const path = require('path');
+const { getProgress, setProgress } = require('./module/storage');
 
 // === Конфиг ===
 const TOKEN = process.env.BOT_TOKEN;
@@ -55,14 +56,16 @@ bot.on('callback_query', (query) => {
 
 // === Функция для начала урока ===
 function startLesson(chatId, userId) {
-  const lessonIndex = userProgress[userId] || 0;
+  const lessonIndex = getProgress(userId);
   const lesson = lessons[lessonIndex];
 
   if (!lesson) {
-    return bot.sendMessage(chatId, '🎉 *Ты прошёл все доступные уроки!*', { parse_mode: 'Markdown' });
+    console.log(`User ${userId} завершил все уроки.`);
+    return safeSend(chatId, '🎉 *Ты прошёл все доступные уроки!*', { parse_mode: 'Markdown' });
   }
 
-  bot.sendMessage(chatId, `📘 *Урок ${lessonIndex + 1}: ${lesson.title}*\n\n${lesson.content}\n\nКогда будешь готов — нажми кнопку ниже, чтобы перейти к заданию.`, {
+  console.log(`User ${userId} начал урок ${lessonIndex + 1}: ${lesson.title}`);
+  safeSend(chatId, `📘 *Урок ${lessonIndex + 1}: ${lesson.title}*\n\n${lesson.content}\n\nКогда будешь готов — нажми кнопку ниже, чтобы перейти к заданию.`, {
     parse_mode: 'Markdown',
     reply_markup: {
       inline_keyboard: [
@@ -108,8 +111,9 @@ function checkAnswer(chatId, userId, lessonIndex, selectedAnswer) {
   const correctAnswer = lesson.task.answer;
 
   if (lesson && lesson.task && selectedAnswer === correctAnswer) {
-    userProgress[userId] = lessonIndex + 1;
-    bot.sendMessage(chatId, '✅ *Верно!*\nПереходим к следующему уроку.', {
+    console.log(`User ${userId} ответил правильно на урок ${lessonIndex + 1}`);
+    setProgress(userId, lessonIndex + 1);
+    safeSend(chatId, '✅ *Верно!*\nПереходим к следующему уроку.', {
       parse_mode: 'Markdown',
       reply_markup: {
         inline_keyboard: [
@@ -118,7 +122,8 @@ function checkAnswer(chatId, userId, lessonIndex, selectedAnswer) {
       }
     });
   } else {
-    bot.sendMessage(chatId, '❌ *Неверно.* Попробуй ещё раз.', { parse_mode: 'Markdown' });
+    console.log(`User ${userId} ответил неверно на урок ${lessonIndex + 1}`);
+    safeSend(chatId, '❌ *Неверно.* Попробуй ещё раз.', { parse_mode: 'Markdown' });
   }
 }
 
@@ -128,4 +133,11 @@ function shuffleAnswers(answers) {
     .map((answer) => ({ answer, sort: Math.random() }))
     .sort((a, b) => a.sort - b.sort)
     .map(({ answer }) => answer);
+}
+
+// === Безопасная отправка сообщений ===
+function safeSend(chatId, text, options = {}) {
+  bot.sendMessage(chatId, text, options).catch((err) => {
+    console.error(`Ошибка отправки сообщения пользователю ${chatId}:`, err.message);
+  });
 }
