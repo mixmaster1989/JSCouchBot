@@ -46,7 +46,6 @@ bot.onText(/\/start/, (msg) => {
     chatId,
     `👋 *Привет, ${msg.from.first_name}!*\n\nЯ — *JS CouchBot*.\nБуду твоим тренером по JavaScript. Выбери, с чего начать:`,
     {
-      parse_mode: "Markdown",
       reply_markup: {
         inline_keyboard: [
           [{ text: "🚀 Начать обучение", callback_data: "start_learning" }],
@@ -68,9 +67,7 @@ const startTest = (chatId, userId) => {
 
   if (lessonIndex >= lessons.length || lessons.length === 0) {
     logger.info(`User ${userId} завершил все уроки.`);
-    return safeSend(chatId, "🎉 *Ты завершил все тесты! Отличная работа!*", {
-      parse_mode: "Markdown",
-    });
+    return safeSend(chatId, "🎉 *Ты завершил все тесты! Отличная работа!*");
   }
   const lesson = lessons[lessonIndex];
   logger.info(`User ${userId} начал тест ${lessonIndex + 1}: ${lesson.title}`);
@@ -80,7 +77,6 @@ const startTest = (chatId, userId) => {
     ...lesson.task.wrongAnswers,
   ]);
   safeSend(chatId, `🧠 *Задание:*\n${lesson.task.question}`, {
-    parse_mode: "Markdown",
     reply_markup: {
       inline_keyboard: answers.map((answer) => [
         { text: answer, callback_data: `test_${lessonIndex}_${answer}` },
@@ -109,7 +105,6 @@ bot.on("callback_query", (query) => {
     if (lesson && lesson.task && selectedAnswer === correctAnswer) {
       ++userProgress[userId];
       safeSend(chatId, "✅ *Верно!*\nПереходим к следующему тесту.", {
-        parse_mode: "Markdown",
         reply_markup: {
           inline_keyboard: [
             [{ text: "➡️ Следующий тест", callback_data: "start_tests" }],
@@ -118,9 +113,7 @@ bot.on("callback_query", (query) => {
       });
       return;
     }
-    safeSend(chatId, "❌ *Неверно.* Попробуй ещё раз.", {
-      parse_mode: "Markdown",
-    });
+    safeSend(chatId, "❌ *Неверно.* Попробуй ещё раз.");
   } else if (query.data.startsWith("randomtest_")) {
     const [_, lessonIndex, selectedAnswer] = query.data.split("_");
     const lessons = getLessonsForUser(userId);
@@ -128,7 +121,6 @@ bot.on("callback_query", (query) => {
     const correctAnswer = lesson.task.answer;
     if (lesson && lesson.task && selectedAnswer === correctAnswer) {
       safeSend(chatId, "✅ *Верно!*\nПереходим к следующему тесту.", {
-        parse_mode: "Markdown",
         reply_markup: {
           inline_keyboard: [
             [{ text: "➡️ Следующий тест", callback_data: "start_random_test" }],
@@ -137,9 +129,7 @@ bot.on("callback_query", (query) => {
       });
       return;
     }
-    safeSend(chatId, "❌ *Неверно.* Попробуй ещё раз.", {
-      parse_mode: "Markdown",
-    });
+    safeSend(chatId, "❌ *Неверно.* Попробуй ещё раз.");
   } else if (query.data === "start_tests") {
     // Начать тесты
     startTest(chatId, userId);
@@ -159,7 +149,6 @@ const startRandomTest = (chatId, userId) => {
     ...lesson.task.wrongAnswers,
   ]);
   safeSend(chatId, `🧠 *Задание:*\n${lesson.task.question}`, {
-    parse_mode: "Markdown",
     reply_markup: {
       inline_keyboard: answers.map((answer) => [
         { text: answer, callback_data: `randomtest_${lessonIndex}_${answer}` },
@@ -177,8 +166,7 @@ function startLesson(chatId, userId) {
     logger.info(`User ${userId} завершил все уровни.`);
     return safeSend(
       chatId,
-      "🎉 *Ты завершил все уровни обучения! Отличная работа!*",
-      { parse_mode: "Markdown" }
+      "🎉 *Ты завершил все уровни обучения! Отличная работа!*"
     );
   }
 
@@ -190,7 +178,6 @@ function startLesson(chatId, userId) {
       lesson.content
     }\n\nКогда будешь готов — нажми кнопку ниже, чтобы перейти к заданию.`,
     {
-      parse_mode: "Markdown",
       reply_markup: {
         inline_keyboard: [
           [
@@ -216,9 +203,7 @@ bot.on("callback_query", (query) => {
     const lesson = lessons[lessonIndex];
 
     if (!lesson || !lesson.task) {
-      return bot.sendMessage(chatId, "🛠 *Задания для этого урока нет.*", {
-        parse_mode: "Markdown",
-      });
+      return bot.sendMessage(chatId, "🛠 *Задания для этого урока нет.*");
     }
 
     // Собираем варианты ответов
@@ -228,7 +213,6 @@ bot.on("callback_query", (query) => {
     ]);
 
     bot.sendMessage(chatId, `🧠 *Задание:*\n${lesson.task.question}`, {
-      parse_mode: "Markdown",
       reply_markup: {
         inline_keyboard: answers.map((answer) => [
           { text: answer, callback_data: `answer_${lessonIndex}_${answer}` },
@@ -248,7 +232,6 @@ function checkAnswer(chatId, userId, lessonIndex, selectedAnswer) {
     logger.info(`User ${userId} ответил правильно на урок ${lessonIndex + 1}`);
     setProgress(userId, lessonIndex + 1);
     safeSend(chatId, "✅ *Верно!*\nПереходим к следующему уроку.", {
-      parse_mode: "Markdown",
       reply_markup: {
         inline_keyboard: [
           [{ text: "➡️ Следующий урок", callback_data: "start_learning" }],
@@ -257,9 +240,7 @@ function checkAnswer(chatId, userId, lessonIndex, selectedAnswer) {
     });
   } else {
     logger.info(`User ${userId} ответил неверно на урок ${lessonIndex + 1}`);
-    safeSend(chatId, "❌ *Неверно.* Попробуй ещё раз.", {
-      parse_mode: "Markdown",
-    });
+    safeSend(chatId, "❌ *Неверно.* Попробуй ещё раз.");
   }
 }
 
