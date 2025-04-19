@@ -275,8 +275,8 @@ function shuffleAnswers(answers) {
 function safeSend(chatId, text, options = {}) {
   bot.sendMessage(chatId, text, options).catch((err) => {
     logger.error(
-      `Ошибка отправки сообщения пользователю ${chatId}:`,
-      err.message
+      `Ошибка отправки сообщения пользователю ${chatId}`,
+      err
     );
   });
 }
