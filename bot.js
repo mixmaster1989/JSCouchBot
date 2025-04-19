@@ -4,11 +4,12 @@ const TelegramBot = require("node-telegram-bot-api");
 const fs = require("fs");
 const path = require("path");
 const { getProgress, setProgress } = require("./module/storage");
+const { logger } = require("./logger");
 
 // === Конфиг ===
 const TOKEN = process.env.BOT_TOKEN;
 if (!TOKEN) {
-  console.error("❌ BOT_TOKEN не найден в .env");
+  logger.error("❌ BOT_TOKEN не найден в .env");
   process.exit(1);
 }
 
@@ -32,7 +33,7 @@ try {
   const intermediateData = fs.readFileSync(lessonsPathIntermediate, "utf-8");
   intermediateLessons = JSON.parse(intermediateData);
 } catch (err) {
-  console.error("❌ Ошибка загрузки уроков:", err);
+  logger.error("❌ Ошибка загрузки уроков:", err);
 }
 
 // === Хранилище прогресса (в будущем можно сделать через БД) ===
@@ -66,13 +67,13 @@ const startTest = (chatId, userId) => {
   }
 
   if (lessonIndex >= lessons.length || lessons.length === 0) {
-    console.log(`User ${userId} завершил все уроки.`);
+    logger.info(`User ${userId} завершил все уроки.`);
     return safeSend(chatId, "🎉 *Ты завершил все тесты! Отличная работа!*", {
       parse_mode: "Markdown",
     });
   }
   const lesson = lessons[lessonIndex];
-  console.log(`User ${userId} начал тест ${lessonIndex + 1}: ${lesson.title}`);
+  logger.info(`User ${userId} начал тест ${lessonIndex + 1}: ${lesson.title}`);
   // Собираем варианты ответов
   const answers = shuffleAnswers([
     lesson.task.answer,
@@ -152,7 +153,7 @@ const startRandomTest = (chatId, userId) => {
   const lessons = getLessonsForUser(userId);
   const lessonIndex = Math.floor(Math.random() * lessons.length);
   const lesson = lessons[lessonIndex];
-  console.log(`User ${userId} начал тест ${lessonIndex + 1}: ${lesson.title}`);
+  logger.info(`User ${userId} начал тест ${lessonIndex + 1}: ${lesson.title}`);
   const answers = shuffleAnswers([
     lesson.task.answer,
     ...lesson.task.wrongAnswers,
@@ -173,7 +174,7 @@ function startLesson(chatId, userId) {
   const lessonIndex = getProgress(userId);
 
   if (lessonIndex >= lessons.length || lessons.length === 0) {
-    console.log(`User ${userId} завершил все уровни.`);
+    logger.info(`User ${userId} завершил все уровни.`);
     return safeSend(
       chatId,
       "🎉 *Ты завершил все уровни обучения! Отличная работа!*",
@@ -182,7 +183,7 @@ function startLesson(chatId, userId) {
   }
 
   const lesson = lessons[lessonIndex];
-  console.log(`User ${userId} начал урок ${lessonIndex + 1}: ${lesson.title}`);
+  logger.info(`User ${userId} начал урок ${lessonIndex + 1}: ${lesson.title}`);
   safeSend(
     chatId,
     `📘 *Урок ${lessonIndex + 1}: ${lesson.title}*\n\n${
@@ -244,7 +245,7 @@ function checkAnswer(chatId, userId, lessonIndex, selectedAnswer) {
   const correctAnswer = lesson.task.answer;
 
   if (lesson && lesson.task && selectedAnswer === correctAnswer) {
-    console.log(`User ${userId} ответил правильно на урок ${lessonIndex + 1}`);
+    logger.info(`User ${userId} ответил правильно на урок ${lessonIndex + 1}`);
     setProgress(userId, lessonIndex + 1);
     safeSend(chatId, "✅ *Верно!*\nПереходим к следующему уроку.", {
       parse_mode: "Markdown",
@@ -255,7 +256,7 @@ function checkAnswer(chatId, userId, lessonIndex, selectedAnswer) {
       },
     });
   } else {
-    console.log(`User ${userId} ответил неверно на урок ${lessonIndex + 1}`);
+    logger.info(`User ${userId} ответил неверно на урок ${lessonIndex + 1}`);
     safeSend(chatId, "❌ *Неверно.* Попробуй ещё раз.", {
       parse_mode: "Markdown",
     });
@@ -273,7 +274,7 @@ function shuffleAnswers(answers) {
 // === Безопасная отправка сообщений ===
 function safeSend(chatId, text, options = {}) {
   bot.sendMessage(chatId, text, options).catch((err) => {
-    console.error(
+    logger.error(
       `Ошибка отправки сообщения пользователю ${chatId}:`,
       err.message
     );
@@ -286,7 +287,7 @@ function getLessonsForUser(userId) {
 
   // Если пользователь завершил все уроки для обоих уровней
   if (progress >= beginnerLessons.length + intermediateLessons.length) {
-    console.log(`User ${userId} завершил все уровни.`);
+    logger.info(`User ${userId} завершил все уровни.`);
     return [];
   }
 
