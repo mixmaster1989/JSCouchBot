@@ -1,12 +1,23 @@
-# JSCouchBot
+# JSCouchBot (RU/EN)
 
-🎓 **JSCouchBot** — Telegram-бот для обучения JavaScript с пошаговыми заданиями.  
-Автоматизированный помощник, который подаёт задачи, проверяет ответы и отслеживает прогресс.  
-Идеален для начинающих и тех, кто хочет прокачать базу, не выходя из Telegram.
+RU
+---
+Телеграм‑бот для обучения JavaScript: карточки/вопросы, мини‑упражнения, сохранение прогресса. Подходит для EdTech‑сценариев (самообучение, поддержка учеников).
 
-## Установка
-
+Быстрый старт:
 ```bash
-git clone https://github.com/mixmaster1989/JSCouchBot.git
-cd JSCouchBot
-npm install
+cp .env.example .env
+npm i && npm run start
+```
+
+EN
+---
+Telegram bot for learning JavaScript: flashcards/questions, mini‑exercises, progress storage. Suitable for EdTech scenarios.
+
+Quick start:
+```bash
+cp .env.example .env
+npm i && npm run start
+```
+
+Security: see SECURITY.md • License: MIT
